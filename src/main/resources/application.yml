@@ -1,0 +1,11 @@
+
+resilience4j:
+  ratelimiter:
+    instances:
+      geocodingServiceRateLimiter:
+        limit-for-period: 2   # Max 2 requests per second
+        limit-refresh-period: 1s
+        timeout-duration: 0
+      geocodingServiceMinuteRateLimiter:
+        limit-for-period: 60  # Max 60 requests per minute
+        limit-refresh-period: 1m
