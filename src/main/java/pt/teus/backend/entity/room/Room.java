@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import org.hibernate.annotations.CreationTimestamp;
 import pt.teus.backend.entity.enums.BedSize;
 import pt.teus.backend.entity.enums.PayPeriod;
+import pt.teus.backend.entity.enums.RoomCategory;
 import pt.teus.backend.entity.enums.RoomPrivacyType;
 import pt.teus.backend.entity.user.UserInfo;
 
@@ -18,61 +19,61 @@ import java.util.List;
 @Entity
 @Table(name = "rooms")
 public class Room {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // The user who owns (rents out) this room
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
     private UserInfo owner;
 
     @Column(nullable = false)
-    private String title;
+    private String title; // e.g. "Private Room in T2 Apartment"
 
     @Column(nullable = false, unique = true, length = 50, updatable = false)
-    private String uniqueSlug; // Should not be updated after creation
+    private String slug; // for SEO-friendly URLs
 
-    @Column(nullable = false, precision = 6, scale = 2)
-    @Min(5)
-    @Max(1000)
-    private BigDecimal area;
+    @Column(name = "area_sqm", nullable = false, precision = 6, scale = 2)
+    private BigDecimal area; // m² (square meters)
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal prepayment;
+    @Column(name = "prepayment_amount", precision = 10, scale = 2)
+    private BigDecimal prepayment; // Optional prepayment
 
-    @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal rentalFee;
+    @Column(name = "rental_fee", nullable = false, precision = 10, scale = 2)
+    private BigDecimal rentalFee; // Rent in EUR
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PayPeriod payPeriod;
+    private PayPeriod payPeriod; // DAILY, WEEKLY, MONTHLY, etc.
 
     @Column(nullable = false)
-    private Boolean isSmokingForbidden;
+    private Boolean smokingNotAllowed;
 
     @Column(nullable = false)
-    private Boolean isPetForbidden;
+    private Boolean petsNotAllowed;
 
     @Column(nullable = false)
-    private Boolean isFurnished;
+    private Boolean furnished;
 
     @Column
-    private Boolean isOnlyForWomen;
+    private Boolean womenOnly;
 
     @Column
-    private Boolean ownerLivesHere;
+    private Boolean ownerLivesInProperty;
 
     @Column
-    private Boolean hasCleaningService;
+    private Boolean cleaningServiceIncluded;
 
     @Column
-    private Boolean hasWifi;
+    private Boolean wifiAvailable;
 
     @Column(length = 1000)
     private String description;
 
     @Column
-    private String neighborhood;
+    private String neighborhood; // e.g. Saldanha
 
     @Column(nullable = false)
     private String city;
@@ -84,69 +85,98 @@ public class Room {
     private String postalCode;
 
     @Column
-    private String locationMapImageUrl;
+    private String mapImageUrl; // URL to a map image
 
     @Column(nullable = false)
     private LocalDate availableFrom;
+
+    @Column
+    private LocalDate availableTo;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @ElementCollection
-    private List<String> photos = new ArrayList<>();  // Store image URLs directly
+    @CollectionTable(name = "room_photos", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "photo_url")
+    private List<String> photoUrls = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private BedSize bedSize;
+    private BedSize bedSize; // SINGLE, DOUBLE, QUEEN, KING
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RoomPrivacyType privacyType;  // PRIVATE یا SHARED
+    private RoomPrivacyType privacyType; // PRIVATE, SHARED
 
     @Column(nullable = false)
-    private Integer maxOccupancy;         // چند نفر ظرفیت دارد
+    private Integer maxOccupants; // Max people allowed
 
     @Column
-    private Boolean hasAirConditioner;
+    private Boolean airConditioner;
 
+    @Column
+    private Boolean heating;
+
+    @Column
+    private Boolean kitchenAvailable;
+
+    @Column
+    private Boolean privateBathroom;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RoomCategory category;
+    // APARTMENT, HOTEL, MOTEL, STUDIO, DORMITORY, VILLAGE, etc.
+
+    @Column
+    private String apartmentType;
+    // Optional: T0, T1, T2... only relevant if category is APARTMENT or VILLAGE
+
+    @Column
+    private Integer starRating;
+    // Optional: 2, 3, 4, 5 — relevant if category is HOTEL or MOTEL
 
 
     public Room() {
     }
 
-    public Room(Long id, UserInfo owner, String title, String uniqueSlug, BigDecimal area,
-                BigDecimal prepayment, BigDecimal rentalFee, PayPeriod payPeriod, Boolean isSmokingForbidden,
-                Boolean isPetForbidden, Boolean isFurnished, Boolean isOnlyForWomen, Boolean ownerLivesHere,
-                Boolean hasCleaningService, Boolean hasWifi, Boolean hasAirConditioner, String description,
-                String neighborhood, String city, String country, String postalCode, String locationMapImageUrl, LocalDate availableFrom, LocalDateTime createdAt, List<String> photos, BedSize bedSize, RoomPrivacyType privacyType, Integer maxOccupancy) {
+    public Room(Long id, UserInfo owner, String title, String slug, BigDecimal area, BigDecimal prepayment, BigDecimal rentalFee, PayPeriod payPeriod, Boolean smokingNotAllowed, Boolean petsNotAllowed, Boolean furnished, Boolean womenOnly, Boolean ownerLivesInProperty, Boolean cleaningServiceIncluded, Boolean wifiAvailable, String description, String neighborhood, String city, String country, String postalCode, String mapImageUrl, LocalDate availableFrom, LocalDate availableTo, LocalDateTime createdAt, List<String> photoUrls, BedSize bedSize, RoomPrivacyType privacyType, Integer maxOccupants, Boolean airConditioner, Boolean heating, Boolean kitchenAvailable, Boolean privateBathroom, RoomCategory category, String apartmentType, Integer starRating) {
         this.id = id;
         this.owner = owner;
         this.title = title;
-        this.uniqueSlug = uniqueSlug;
+        this.slug = slug;
         this.area = area;
         this.prepayment = prepayment;
         this.rentalFee = rentalFee;
         this.payPeriod = payPeriod;
-        this.isSmokingForbidden = isSmokingForbidden;
-        this.isPetForbidden = isPetForbidden;
-        this.isFurnished = isFurnished;
-        this.isOnlyForWomen = isOnlyForWomen;
-        this.ownerLivesHere = ownerLivesHere;
-        this.hasCleaningService = hasCleaningService;
-        this.hasWifi = hasWifi;
+        this.smokingNotAllowed = smokingNotAllowed;
+        this.petsNotAllowed = petsNotAllowed;
+        this.furnished = furnished;
+        this.womenOnly = womenOnly;
+        this.ownerLivesInProperty = ownerLivesInProperty;
+        this.cleaningServiceIncluded = cleaningServiceIncluded;
+        this.wifiAvailable = wifiAvailable;
         this.description = description;
         this.neighborhood = neighborhood;
         this.city = city;
         this.country = country;
         this.postalCode = postalCode;
-        this.locationMapImageUrl = locationMapImageUrl;
+        this.mapImageUrl = mapImageUrl;
         this.availableFrom = availableFrom;
+        this.availableTo = availableTo;
         this.createdAt = createdAt;
-        this.photos = photos;
-        this.hasAirConditioner = hasAirConditioner;
+        this.photoUrls = photoUrls;
         this.bedSize = bedSize;
         this.privacyType = privacyType;
-        this.maxOccupancy = maxOccupancy;
+        this.maxOccupants = maxOccupants;
+        this.airConditioner = airConditioner;
+        this.heating = heating;
+        this.kitchenAvailable = kitchenAvailable;
+        this.privateBathroom = privateBathroom;
+        this.category = category;
+        this.apartmentType = apartmentType;
+        this.starRating = starRating;
     }
 
     public Long getId() {
@@ -173,12 +203,12 @@ public class Room {
         this.title = title;
     }
 
-    public String getUniqueSlug() {
-        return uniqueSlug;
+    public String getSlug() {
+        return slug;
     }
 
-    public void setUniqueSlug(String uniqueSlug) {
-        this.uniqueSlug = uniqueSlug;
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 
     public BigDecimal getArea() {
@@ -213,60 +243,60 @@ public class Room {
         this.payPeriod = payPeriod;
     }
 
-    public Boolean getSmokingForbidden() {
-        return isSmokingForbidden;
+    public Boolean getSmokingNotAllowed() {
+        return smokingNotAllowed;
     }
 
-    public void setSmokingForbidden(Boolean smokingForbidden) {
-        isSmokingForbidden = smokingForbidden;
+    public void setSmokingNotAllowed(Boolean smokingNotAllowed) {
+        this.smokingNotAllowed = smokingNotAllowed;
     }
 
-    public Boolean getPetForbidden() {
-        return isPetForbidden;
+    public Boolean getPetsNotAllowed() {
+        return petsNotAllowed;
     }
 
-    public void setPetForbidden(Boolean petForbidden) {
-        isPetForbidden = petForbidden;
+    public void setPetsNotAllowed(Boolean petsNotAllowed) {
+        this.petsNotAllowed = petsNotAllowed;
     }
 
     public Boolean getFurnished() {
-        return isFurnished;
+        return furnished;
     }
 
     public void setFurnished(Boolean furnished) {
-        isFurnished = furnished;
+        this.furnished = furnished;
     }
 
-    public Boolean getOnlyForWomen() {
-        return isOnlyForWomen;
+    public Boolean getWomenOnly() {
+        return womenOnly;
     }
 
-    public void setOnlyForWomen(Boolean onlyForWomen) {
-        isOnlyForWomen = onlyForWomen;
+    public void setWomenOnly(Boolean womenOnly) {
+        this.womenOnly = womenOnly;
     }
 
-    public Boolean getOwnerLivesHere() {
-        return ownerLivesHere;
+    public Boolean getOwnerLivesInProperty() {
+        return ownerLivesInProperty;
     }
 
-    public void setOwnerLivesHere(Boolean ownerLivesHere) {
-        this.ownerLivesHere = ownerLivesHere;
+    public void setOwnerLivesInProperty(Boolean ownerLivesInProperty) {
+        this.ownerLivesInProperty = ownerLivesInProperty;
     }
 
-    public Boolean getHasCleaningService() {
-        return hasCleaningService;
+    public Boolean getCleaningServiceIncluded() {
+        return cleaningServiceIncluded;
     }
 
-    public void setHasCleaningService(Boolean hasCleaningService) {
-        this.hasCleaningService = hasCleaningService;
+    public void setCleaningServiceIncluded(Boolean cleaningServiceIncluded) {
+        this.cleaningServiceIncluded = cleaningServiceIncluded;
     }
 
-    public Boolean getHasWifi() {
-        return hasWifi;
+    public Boolean getWifiAvailable() {
+        return wifiAvailable;
     }
 
-    public void setHasWifi(Boolean hasWifi) {
-        this.hasWifi = hasWifi;
+    public void setWifiAvailable(Boolean wifiAvailable) {
+        this.wifiAvailable = wifiAvailable;
     }
 
     public String getDescription() {
@@ -309,12 +339,12 @@ public class Room {
         this.postalCode = postalCode;
     }
 
-    public String getLocationMapImageUrl() {
-        return locationMapImageUrl;
+    public String getMapImageUrl() {
+        return mapImageUrl;
     }
 
-    public void setLocationMapImageUrl(String locationMapImageUrl) {
-        this.locationMapImageUrl = locationMapImageUrl;
+    public void setMapImageUrl(String mapImageUrl) {
+        this.mapImageUrl = mapImageUrl;
     }
 
     public LocalDate getAvailableFrom() {
@@ -325,6 +355,14 @@ public class Room {
         this.availableFrom = availableFrom;
     }
 
+    public LocalDate getAvailableTo() {
+        return availableTo;
+    }
+
+    public void setAvailableTo(LocalDate availableTo) {
+        this.availableTo = availableTo;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -333,12 +371,12 @@ public class Room {
         this.createdAt = createdAt;
     }
 
-    public List<String> getPhotos() {
-        return photos;
+    public List<String> getPhotoUrls() {
+        return photoUrls;
     }
 
-    public void setPhotos(List<String> photos) {
-        this.photos = photos;
+    public void setPhotoUrls(List<String> photoUrls) {
+        this.photoUrls = photoUrls;
     }
 
     public BedSize getBedSize() {
@@ -357,19 +395,67 @@ public class Room {
         this.privacyType = privacyType;
     }
 
-    public Integer getMaxOccupancy() {
-        return maxOccupancy;
+    public Integer getMaxOccupants() {
+        return maxOccupants;
     }
 
-    public void setMaxOccupancy(Integer maxOccupancy) {
-        this.maxOccupancy = maxOccupancy;
+    public void setMaxOccupants(Integer maxOccupants) {
+        this.maxOccupants = maxOccupants;
     }
 
-    public Boolean getHasAirConditioner() {
-        return hasAirConditioner;
+    public Boolean getAirConditioner() {
+        return airConditioner;
     }
 
-    public void setHasAirConditioner(Boolean hasAirConditioner) {
-        this.hasAirConditioner = hasAirConditioner;
+    public void setAirConditioner(Boolean airConditioner) {
+        this.airConditioner = airConditioner;
+    }
+
+    public Boolean getHeating() {
+        return heating;
+    }
+
+    public void setHeating(Boolean heating) {
+        this.heating = heating;
+    }
+
+    public Boolean getKitchenAvailable() {
+        return kitchenAvailable;
+    }
+
+    public void setKitchenAvailable(Boolean kitchenAvailable) {
+        this.kitchenAvailable = kitchenAvailable;
+    }
+
+    public Boolean getPrivateBathroom() {
+        return privateBathroom;
+    }
+
+    public void setPrivateBathroom(Boolean privateBathroom) {
+        this.privateBathroom = privateBathroom;
+    }
+
+    public RoomCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(RoomCategory category) {
+        this.category = category;
+    }
+
+    public String getApartmentType() {
+        return apartmentType;
+    }
+
+    public void setApartmentType(String apartmentType) {
+        this.apartmentType = apartmentType;
+    }
+
+    public Integer getStarRating() {
+        return starRating;
+    }
+
+    public void setStarRating(Integer starRating) {
+        this.starRating = starRating;
     }
 }
